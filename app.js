@@ -30,7 +30,7 @@ const MASTER_EMPLOYEES = [
 
 // 32 Koleksi Foto Peserta Lomba (Format Story 9:16)
 const PHOTOS = [
-  { id: 1, imageUrl: "https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=1000&q=80" },
+  { id: 1, imageUrl: "https://raw.githubusercontent.com/jindimaterialindonesia/Voting17an/refs/heads/main/Foto_1%20(1).jpeg" },
   { id: 2, imageUrl: "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=1000&q=80" },
   { id: 3, imageUrl: "https://images.unsplash.com/photo-1556761175-5973dc0f32e7?w=1000&q=80" },
   { id: 4, imageUrl: "https://images.unsplash.com/photo-1531497865144-0464ef8fb9a9?w=1000&q=80" },
