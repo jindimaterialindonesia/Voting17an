@@ -117,7 +117,7 @@ const PHOTOS = [
   { id: 35, imageUrl: "https://raw.githubusercontent.com/jindimaterialindonesia/Voting17an/refs/heads/main/Foto_1%20(35).jpeg" },
   { id: 36, imageUrl: "https://raw.githubusercontent.com/jindimaterialindonesia/Voting17an/refs/heads/main/Foto_1%20(36).jpeg" },
   { id: 37, imageUrl: "https://raw.githubusercontent.com/jindimaterialindonesia/Voting17an/refs/heads/main/Foto_1%20(37).jpeg" },
-  { id: 38, imageUrl: "https://raw.githubusercontent.com/jindimaterialindonesia/Voting17an/refs/heads/main/Foto_1%20(38).jpeg" },
+  { id: 38, imageUrl: "https://raw.githubusercontent.com/jindimaterialindonesia/Voting17an/refs/heads/main/Foto_1%20(38).png" },
 ];
 
 // Helper Storage
