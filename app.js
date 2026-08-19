@@ -6,7 +6,7 @@
  */
 
 // PIN Keamanan Panel Admin
-const ADMIN_PIN = 'admin123';
+const ADMIN_PIN = 'jindi8884';
 
 // Database Master NIK Karyawan (Daftar Karyawan yang Berhak Voting)
 // Anda dapat menempelkan (paste) daftar NIK karyawan perusahaan Anda di sini
