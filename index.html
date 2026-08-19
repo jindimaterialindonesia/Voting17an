@@ -4,193 +4,229 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Voting Lomba Foto Karyawan 2026</title>
+  <!-- Tailwind CSS CDN -->
   <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <!-- Canvas Confetti untuk Efek Sukses -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
   <link rel="stylesheet" href="style.css">
 </head>
-<body class="bg-slate-50 text-slate-900 min-h-screen flex flex-col font-sans">
+<body class="bg-slate-50 text-slate-900 min-h-screen flex flex-col font-sans antialiased selection:bg-indigo-500 selection:text-white">
 
-  <!-- Header / Navbar -->
-  <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-xs">
+  <!-- ================= HEADER / NAVBAR ================= -->
+  <header class="bg-white border-b border-slate-200 sticky top-0 z-40 shadow-xs">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-      <div class="flex items-center gap-2.5">
-        <div class="w-9 h-9 rounded-lg bg-indigo-600 text-white flex items-center justify-center font-bold text-base shadow-xs">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-xl bg-indigo-600 text-white flex items-center justify-center font-bold text-base shadow-xs">
           📸
         </div>
         <div>
-          <h1 class="text-sm sm:text-base font-bold text-slate-800 leading-tight">Voting Lomba Foto Karyawan</h1>
-          <p class="text-[10px] sm:text-xs text-slate-500">Pilih 1 karya foto terbaik pilihan Anda</p>
+          <h1 class="text-base sm:text-lg font-bold text-slate-800 tracking-tight leading-tight">Voting Lomba Foto Karyawan</h1>
+          <p class="text-[11px] text-slate-500 font-medium">Penilaian Karya Foto Murni (Blind Voting)</p>
         </div>
       </div>
 
-      <div class="flex items-center gap-2">
-        <span id="photo-count-badge" class="hidden sm:inline-block px-2.5 py-1 rounded-md text-xs font-semibold bg-slate-100 text-slate-600 border border-slate-200">
-          32 Foto Peserta
+      <div class="flex items-center gap-3">
+        <span class="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-100">
+          <span class="w-2 h-2 rounded-full bg-indigo-600 animate-pulse"></span>
+          Voting Aktif
         </span>
-        <a href="admin.html" title="Akses Panitia" class="p-2 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors">
-          🔒
+        <a href="admin.html" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors flex items-center gap-1.5">
+          <span>🔒 Panel Admin</span>
         </a>
       </div>
     </div>
   </header>
 
-  <!-- Main Content -->
-  <main class="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8 flex-1 w-full space-y-6">
+  <!-- ================= MAIN CONTAINER ================= -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8 flex-1 w-full">
+    
+    <!-- Banner Info Blind Voting -->
+    <div class="mb-6 p-4 rounded-xl bg-white border border-slate-200 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div class="flex items-start sm:items-center gap-3">
+        <div class="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center font-bold shrink-0">
+          💡
+        </div>
+        <p class="text-xs sm:text-sm text-slate-600 leading-relaxed">
+          <strong class="text-slate-800">Sistem Blind Voting:</strong> Seluruh foto ditampilkan murni tanpa nama peserta demi objektivitas penilaian. Masukkan NIK Anda lalu pilih 1 foto favorit.
+        </p>
+      </div>
+      <div class="text-xs text-slate-400 font-mono shrink-0">
+        Total: <strong id="photo-count-badge">32 Foto</strong>
+      </div>
+    </div>
 
-    <!-- Form Input NIK & Voting Panel (Sticky on Mobile/Top) -->
-    <section class="bg-white rounded-xl p-5 sm:p-6 border border-slate-200 shadow-xs">
-      <form id="vote-form" class="space-y-4">
-        <div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
-          <div class="flex-1">
-            <label for="nik-input" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-              NIK Karyawan <span class="text-rose-500">*</span>
-            </label>
-            <div class="relative">
+    <!-- Layout 2 Kolom: Kiri Panel Pemilih, Kanan Galeri Foto -->
+    <div class="flex flex-col lg:flex-row gap-8 items-start">
+
+      <!-- ================= KOLOM KIRI: FORM LOGIN NIK & STATUS ================= -->
+      <aside class="w-full lg:w-88 shrink-0 lg:sticky lg:top-24 space-y-6">
+        
+        <!-- Form Autentikasi NIK -->
+        <div class="bg-white border border-slate-200 rounded-xl p-6 sm:p-7 shadow-xs">
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+              <span>👤 Autentikasi Pemilih</span>
+            </h2>
+            <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-600">1 NIK = 1 Suara</span>
+          </div>
+
+          <!-- Alert Error -->
+          <div id="error-msg" class="hidden mb-4 p-3 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 text-xs leading-relaxed font-medium"></div>
+
+          <!-- Form Input -->
+          <form id="vote-form" class="space-y-4">
+            <div>
+              <label for="nik-input" class="block text-xs font-bold text-slate-700 mb-1.5">
+                Nomor Induk Karyawan (NIK) <span class="text-rose-500">*</span>
+              </label>
               <input 
                 type="text" 
                 id="nik-input" 
-                placeholder="Masukkan Nomor Induk Karyawan (contoh: 199201152018031002)"
-                class="w-full px-4 py-2.5 text-sm bg-slate-50 focus:bg-white border border-slate-200 focus:border-indigo-600 rounded-lg outline-none font-mono transition-all"
+                placeholder="Contoh: 199201152018031002" 
+                class="w-full px-3.5 py-2.5 bg-slate-50 focus:bg-white border border-slate-300 focus:border-indigo-600 rounded-lg text-sm outline-none transition-all focus:ring-2 focus:ring-indigo-100 font-mono font-medium"
                 required
               >
+              <p class="text-[11px] text-slate-400 mt-1">Hanya NIK yang terdaftar yang berhak memilih.</p>
             </div>
-            <p class="text-[11px] text-slate-500 mt-1">1 NIK hanya dapat memberikan 1 kali suara.</p>
-          </div>
 
-          <div class="flex items-center gap-3">
-            <div id="selected-summary" class="hidden text-xs bg-indigo-50 text-indigo-700 font-medium px-3 py-2 rounded-lg border border-indigo-100">
-              Belum ada foto dipilih
+            <!-- Preview Foto yang Sedang Dipilih -->
+            <div id="selected-photo-preview" class="p-3.5 rounded-lg border border-dashed border-slate-200 bg-slate-50 text-center">
+              <p class="text-xs text-slate-400 italic">Belum ada foto yang dipilih.</p>
+              <p class="text-[11px] text-slate-400 mt-0.5">Klik tombol <strong class="text-slate-600">"Pilih Foto Ini"</strong> pada galeri.</p>
             </div>
 
             <button 
               type="submit" 
-              id="btn-submit-vote"
-              class="w-full md:w-auto px-6 py-2.5 rounded-lg font-semibold text-sm bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs transition-all active:scale-98 cursor-pointer flex items-center justify-center gap-2"
+              id="btn-submit-vote" 
+              class="w-full py-3 px-4 rounded-lg font-bold text-sm bg-indigo-600 hover:bg-indigo-700 active:scale-98 text-white shadow-xs transition-all cursor-pointer flex items-center justify-center gap-2"
             >
-              <span>Kirim Suara</span>
+              <span>Kirim Suara Pilihan</span>
               <span>→</span>
             </button>
+          </form>
+
+          <div class="mt-4 pt-4 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-400">
+            <span>🔒 Rahasia & Terenkripsi</span>
+            <span>✓ Anti Manipulasi</span>
           </div>
         </div>
 
-        <!-- Alert Pesan Error / Peringatan Double Voting -->
-        <div id="error-msg" class="hidden p-3.5 bg-rose-50 border border-rose-200 rounded-lg text-xs font-semibold text-rose-700 animate-fade-in"></div>
-      </form>
-    </section>
-
-    <!-- Galeri Foto Peserta (Hanya Foto & Nomor) -->
-    <section>
-      <div class="flex items-center justify-between mb-4">
-        <div>
-          <h2 class="text-base sm:text-lg font-bold text-slate-800 tracking-tight">Galeri Foto Peserta</h2>
-          <p class="text-xs text-slate-500">Klik pada foto atau tombol pilih untuk menentukan 1 foto pilihan Anda.</p>
+        <!-- Panduan Singkat -->
+        <div class="bg-white border border-slate-200 rounded-xl p-5 shadow-xs text-xs text-slate-600 space-y-2.5">
+          <h3 class="font-bold text-slate-800">Petunjuk Singkat:</h3>
+          <ol class="list-decimal list-inside space-y-1.5 text-slate-500">
+            <li>Ketik NIK Karyawan Anda pada form di atas.</li>
+            <li>Jelajahi galeri foto di sebelah kanan (klik foto untuk memperbesar).</li>
+            <li>Klik tombol <strong>"Pilih Foto Ini"</strong> pada 1 karya terbaik.</li>
+            <li>Tekan tombol <strong>"Kirim Suara Pilihan"</strong> dan konfirmasi.</li>
+            <li>Simpan kode struk digital bukti suara Anda.</li>
+          </ol>
         </div>
-      </div>
 
-      <!-- Grid Foto Responsif (1 col HP, 2 col Tablet, 4 col Desktop) -->
-      <div id="photo-gallery" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-5">
-        <!-- Rendered dynamically by app.js -->
-      </div>
-    </section>
+      </aside>
 
+      <!-- ================= KOLOM KANAN: GALERI FOTO (9:16 ASPECT RATIO) ================= -->
+      <section class="flex-1 w-full">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-sm font-bold uppercase tracking-wider text-slate-500">Galeri Foto Peserta</h2>
+          <span class="text-xs text-slate-400 font-medium">Format Story (9:16)</span>
+        </div>
+
+        <!-- Grid 32 Foto -->
+        <div id="photos-grid" class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5">
+          <!-- Rendered dynamically by app.js -->
+        </div>
+      </section>
+
+    </div>
   </main>
 
-  <!-- Modal Konfirmasi Voting -->
-  <div id="confirm-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs modal-backdrop">
-    <div class="w-full max-w-md bg-white rounded-xl p-6 shadow-xl border border-slate-200 animate-in">
-      <h3 class="text-base font-bold text-slate-900 leading-tight">Konfirmasi Pengiriman Suara</h3>
-      <p class="text-xs text-slate-500 mt-0.5">Pilihan bersifat final dan tidak dapat diubah setelah dikirim.</p>
+  <!-- ================= MODAL KONFIRMASI VOTING ================= -->
+  <div id="confirm-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+    <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-xl border border-slate-200 text-center">
+      <div class="w-12 h-12 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center mx-auto mb-3 font-bold text-xl">
+        ❓
+      </div>
+      <h3 class="text-lg font-bold text-slate-800">Konfirmasi Pilihan Anda</h3>
+      <p class="text-xs text-slate-500 mt-1 mb-4">Pilihan suara bersifat final dan tidak dapat diubah setelah dikirim.</p>
 
-      <div class="my-4 p-3.5 bg-slate-50 rounded-lg border border-slate-200 flex items-center gap-3">
-        <img id="modal-confirm-img" src="" alt="Preview" class="w-16 h-12 rounded object-cover border border-slate-200 shrink-0">
-        <div>
-          <span class="text-[11px] font-bold text-indigo-600 uppercase">Pilihan Anda:</span>
-          <h4 id="modal-confirm-photo" class="font-bold text-slate-800 text-sm">Foto #00</h4>
+      <div class="bg-slate-50 rounded-xl p-3 mb-5 border border-slate-100 flex items-center gap-3 text-left">
+        <img id="modal-confirm-img" src="" alt="Selected Photo" class="w-16 h-24 object-cover rounded-lg shadow-xs shrink-0">
+        <div class="text-xs">
+          <div class="font-bold text-slate-800" id="modal-confirm-photo">Foto #01</div>
+          <div class="text-slate-500 mt-1">NIK Pemilih:</div>
+          <div class="font-mono font-bold text-indigo-600" id="modal-confirm-nik">-</div>
         </div>
       </div>
 
-      <div class="text-xs bg-indigo-50/50 p-3 rounded-lg border border-indigo-100 text-slate-700 space-y-1 mb-5">
-        <div class="flex justify-between">
-          <span class="text-slate-500">NIK Pemilih:</span>
-          <span id="modal-confirm-nik" class="font-mono font-bold text-slate-900">-</span>
-        </div>
-        <div class="flex justify-between">
-          <span class="text-slate-500">Aturan:</span>
-          <span class="font-semibold text-emerald-700">1 NIK = 1 Suara Sah</span>
-        </div>
-      </div>
-
-      <div class="flex gap-2.5">
-        <button type="button" onclick="closeConfirmModal()" class="flex-1 py-2 px-3 rounded-lg text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 transition-colors">
+      <div class="flex items-center gap-2">
+        <button type="button" onclick="closeConfirmModal()" class="flex-1 py-2.5 rounded-lg font-semibold text-xs text-slate-600 hover:bg-slate-100 border border-slate-200 transition-colors cursor-pointer">
           Batal
         </button>
-        <button type="button" onclick="executeVote()" class="flex-1 py-2 px-3 rounded-lg text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 shadow-xs transition-all">
+        <button type="button" onclick="executeVote()" class="flex-1 py-2.5 rounded-lg font-bold text-xs bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs transition-colors cursor-pointer">
           Ya, Kirim Suara
         </button>
       </div>
     </div>
   </div>
 
-  <!-- Modal Struk Bukti Sukses -->
-  <div id="success-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs modal-backdrop">
-    <div class="w-full max-w-md bg-white rounded-xl p-6 shadow-xl border border-slate-200 text-center">
-      <div class="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-lg flex items-center justify-center mx-auto mb-3 border border-emerald-100 text-xl font-bold">
+  <!-- ================= MODAL STRUK SUKSES VOTING ================= -->
+  <div id="receipt-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+    <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-xl border border-slate-200 text-center">
+      <div class="w-14 h-14 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto mb-3 font-bold text-2xl border border-emerald-100">
         ✓
       </div>
-      <h3 class="text-lg font-bold text-slate-800">Suara Anda Berhasil Dicatat!</h3>
-      <p class="text-xs text-slate-500 mt-0.5">Terima kasih atas partisipasi Anda dalam Lomba Foto Karyawan.</p>
+      <h3 class="text-xl font-bold text-slate-800">Suara Berhasil Dicatat!</h3>
+      <p class="text-xs text-slate-500 mt-1 mb-4">Terima kasih atas partisipasi Anda dalam Lomba Foto Karyawan 2026.</p>
 
-      <div class="bg-slate-50 rounded-lg border border-slate-200 p-4 my-4 text-left text-xs space-y-2">
-        <div class="flex justify-between pb-2 border-b border-dashed border-slate-200">
-          <span class="text-slate-500">Kode Struk Digital:</span>
-          <span id="receipt-code" class="font-mono font-bold text-indigo-700">VOTE-XXXXXX</span>
+      <!-- Digital Receipt Ticket -->
+      <div class="bg-slate-50 rounded-xl p-4 mb-5 border border-slate-200 text-left font-mono text-xs space-y-2">
+        <div class="flex justify-between border-b border-slate-200 pb-2">
+          <span class="text-slate-400">Kode Struk:</span>
+          <strong id="receipt-code" class="text-indigo-600">VOTE-2026-XXXX</strong>
         </div>
         <div class="flex justify-between">
-          <span class="text-slate-500">NIK Pemilih:</span>
-          <span id="receipt-nik" class="font-mono font-bold text-slate-900">-</span>
+          <span class="text-slate-400">NIK Pemilih:</span>
+          <span id="receipt-nik" class="text-slate-700 font-bold">-</span>
         </div>
         <div class="flex justify-between">
-          <span class="text-slate-500">Foto Dipilih:</span>
-          <span id="receipt-photo" class="font-bold text-slate-900">Foto #00</span>
+          <span class="text-slate-400">Pilihan:</span>
+          <span id="receipt-photo" class="text-slate-700 font-bold">-</span>
         </div>
-        <div class="flex justify-between">
-          <span class="text-slate-500">Waktu:</span>
-          <span id="receipt-time" class="text-slate-600">-</span>
+        <div class="flex justify-between pt-2 border-t border-slate-200 text-[11px] text-slate-400">
+          <span>Waktu:</span>
+          <span id="receipt-time">-</span>
         </div>
       </div>
 
-      <p class="text-[11px] text-amber-800 bg-amber-50 p-2.5 rounded-lg border border-amber-200 mb-5 leading-relaxed">
-        🔒 <strong>Kerahasiaan:</strong> Grafik hasil suara sementara hanya dapat diakses oleh Panitia untuk menjaga sportivitas.
-      </p>
-
-      <button type="button" onclick="closeSuccessModal()" class="w-full py-2.5 rounded-lg font-semibold text-xs bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs">
+      <button type="button" onclick="closeReceiptModal()" class="w-full py-2.5 rounded-lg font-bold text-xs bg-slate-800 hover:bg-slate-900 text-white shadow-xs transition-colors cursor-pointer">
         Tutup & Selesai
       </button>
     </div>
   </div>
 
-  <!-- Modal Lightbox (Preview Foto Besar) -->
-  <div id="lightbox-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-slate-950/80 backdrop-blur-xs modal-backdrop" onclick="closeLightbox()">
-    <div class="relative max-w-4xl w-full bg-white rounded-xl overflow-hidden shadow-2xl flex flex-col md:flex-row max-h-[90vh]" onclick="event.stopPropagation()">
-      <div class="relative md:w-3/5 bg-black flex items-center justify-center min-h-[260px] sm:min-h-[380px]">
-        <img id="lightbox-img" src="" alt="Full Photo" class="w-full h-full max-h-[70vh] object-contain">
-      </div>
-      <div class="md:w-2/5 p-5 flex flex-col justify-between bg-white">
-        <div>
-          <h4 id="lightbox-title" class="text-base font-bold text-slate-800">Karya Foto #00</h4>
-          <p class="text-xs text-slate-500 mt-1">Periksa detail foto sebelum menentukan pilihan suara Anda.</p>
-        </div>
-        <div class="mt-4 pt-3 border-t border-slate-100 space-y-2">
-          <button id="lightbox-select-btn" type="button" class="w-full py-2.5 rounded-lg font-semibold text-xs bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs">
-            Pilih Foto Ini
-          </button>
-          <button type="button" onclick="closeLightbox()" class="w-full py-1.5 text-xs text-slate-500 hover:text-slate-800">
-            Tutup
-          </button>
-        </div>
+  <!-- ================= MODAL LIGHTBOX ZOOM FOTO ================= -->
+  <div id="lightbox-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-sm" onclick="closeLightbox()">
+    <div class="relative max-w-lg max-h-[90vh] flex flex-col items-center" onclick="event.stopPropagation()">
+      <button type="button" onclick="closeLightbox()" class="absolute -top-10 right-0 text-white hover:text-slate-300 font-bold text-sm bg-white/10 px-3 py-1 rounded-full cursor-pointer">
+        ✕ Tutup
+      </button>
+      <img id="lightbox-img" src="" alt="Zoom Photo" class="max-h-[80vh] w-auto object-contain rounded-xl shadow-2xl">
+      <div id="lightbox-caption" class="mt-3 text-white text-xs font-semibold bg-black/50 px-4 py-1.5 rounded-full">
+        Foto #01
       </div>
     </div>
   </div>
 
+  <!-- Footer -->
+  <footer class="bg-white border-t border-slate-200 py-6 mt-12 text-center text-xs text-slate-400">
+    <div class="max-w-7xl mx-auto px-4">
+      <p>© 2026 Panitia Lomba Foto Karyawan. Hak Cipta Dilindungi.</p>
+      <p class="mt-1 text-[11px]">Sistem Voting Online Independen dengan Verifikasi NIK Unik</p>
+    </div>
+  </footer>
+
+  <!-- App Script Logic -->
   <script src="app.js"></script>
 </body>
 </html>
