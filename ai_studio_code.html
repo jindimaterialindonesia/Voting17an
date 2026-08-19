@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Panel Rekapitulasi Suara - Admin</title>
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="bg-slate-50 text-slate-900 min-h-screen flex flex-col font-sans">
+
+  <header class="bg-white border-b border-slate-200 sticky top-0 z-40">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+      <div class="flex items-center gap-2.5">
+        <div class="w-8 h-8 rounded-lg bg-indigo-600 text-white flex items-center justify-center font-bold text-sm shadow-xs">
+          🔒
+        </div>
+        <div>
+          <h1 class="text-sm sm:text-base font-bold text-slate-800 leading-tight">Panel Rekapitulasi Panitia</h1>
+          <p class="text-[10px] text-slate-500">Lomba Foto Karyawan 2026</p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <a href="index.html" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors">
+          ← Halaman Pemilih
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 py-8 flex-1 w-full">
+
+    <!-- 1. Form Login PIN Admin -->
+    <div id="admin-login-screen" class="max-w-md mx-auto my-12 bg-white rounded-xl p-8 border border-slate-200 shadow-xs text-center">
+      <div class="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-lg flex items-center justify-center mx-auto mb-4 border border-indigo-100 text-xl font-bold">
+        🔑
+      </div>
+      <h2 class="text-xl font-bold text-slate-800 tracking-tight">Akses Panel Admin</h2>
+      <p class="text-xs text-slate-500 mt-1 mb-6">Masukkan PIN Keamanan Panitia untuk melihat rekapitulasi data.</p>
+
+      <div id="admin-auth-error" class="hidden mb-4 p-3 bg-rose-50 border border-rose-200 rounded-lg text-xs font-semibold text-rose-700"></div>
+
+      <form id="admin-login-form" class="space-y-4">
+        <div>
+          <input 
+            type="password" 
+            id="admin-pin-input"
+            placeholder="PIN (Default: admin123)"
+            class="w-full px-4 py-3 text-center text-base tracking-widest bg-slate-50 focus:bg-white border border-slate-200 focus:border-indigo-600 rounded-lg font-mono font-bold outline-none"
+            required
+            autofocus
+          >
+          <p class="text-[11px] text-slate-400 mt-1.5">Demo PIN: <code class="font-mono bg-slate-100 px-1 py-0.5 rounded text-slate-700">admin123</code></p>
+        </div>
+
+        <button type="submit" class="w-full py-3 px-4 rounded-lg font-semibold text-sm bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs transition-all active:scale-98">
+          Buka Dashboard
+        </button>
+      </form>
+    </div>
+
+    <!-- 2. Admin Dashboard (Tampil setelah PIN Benar) -->
+    <div id="admin-dashboard" class="hidden space-y-6">
+
+      <!-- Header & Tombol Export -->
+      <div class="bg-white rounded-xl p-6 border border-slate-200 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <span class="text-indigo-600 font-bold text-xs uppercase tracking-wider">PANEL RAHASIA ADMIN</span>
+          <h2 class="text-2xl font-bold text-slate-800 tracking-tight">Rekapitulasi Suara Pemilih</h2>
+          <p class="text-xs text-slate-500 mt-0.5">Pantau perolehan suara real-time dan unduh data ke format CSV.</p>
+        </div>
+
+        <div class="flex items-center gap-2 flex-wrap">
+          <button type="button" onclick="exportVotesToCSV()" class="px-4 py-2 rounded-lg font-semibold text-xs bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs transition-all active:scale-98">
+            📥 Export to CSV
+          </button>
+          <button type="button" onclick="renderAdminDashboard()" class="px-3 py-2 rounded-lg font-medium text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors">
+            🔄 Refresh
+          </button>
+          <button type="button" onclick="resetAllVotes()" class="px-3 py-2 rounded-lg font-medium text-xs text-rose-600 hover:bg-rose-50 border border-rose-200 transition-colors">
+            🗑️ Reset Data
+          </button>
+        </div>
+      </div>
+
+      <!-- KPI Metrics -->
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-xs">
+          <span class="text-xs font-medium text-slate-500">Total Suara Masuk</span>
+          <div id="kpi-total-votes" class="text-2xl font-bold text-slate-900 mt-1">0</div>
+          <p class="text-[10px] text-emerald-600 font-semibold mt-1">✓ NIK Unik Terverifikasi</p>
+        </div>
+
+        <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-xs">
+          <span class="text-xs font-medium text-slate-500">Total Karya Foto</span>
+          <div class="text-2xl font-bold text-slate-900 mt-1">32</div>
+          <p class="text-[10px] text-slate-400 mt-1">Foto Peserta Lomba</p>
+        </div>
+
+        <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-xs">
+          <span class="text-xs font-medium text-slate-500">Metode Voting</span>
+          <div class="text-sm font-bold text-slate-900 mt-2">Blind Voting</div>
+          <p class="text-[10px] text-indigo-600 font-semibold mt-0.5">Penilaian Murni Karya</p>
+        </div>
+
+        <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-xs">
+          <span class="text-xs font-medium text-slate-500">Waktu Suara Terakhir</span>
+          <div id="kpi-last-vote" class="text-xs font-bold text-slate-900 mt-2 truncate">Belum ada</div>
+          <p class="text-[10px] text-slate-400 mt-0.5">Real-time update</p>
+        </div>
+      </div>
+
+      <!-- Leaderboard Ranking -->
+      <div class="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-xs">
+        <div class="p-4 border-b border-slate-100 flex items-center justify-between">
+          <h3 class="font-bold text-slate-800 text-sm">🏆 Peringkat Perolehan Suara</h3>
+          <span class="text-xs text-slate-400">Diurutkan dari suara terbanyak</span>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs sm:text-sm">
+            <thead class="bg-slate-50 text-slate-600 uppercase text-[11px] font-bold border-b border-slate-200">
+              <tr>
+                <th class="py-3 px-4 w-16 text-center">Rank</th>
+                <th class="py-3 px-4">Foto Peserta</th>
+                <th class="py-3 px-4">Total Suara</th>
+                <th class="py-3 px-4">Persentase</th>
+              </tr>
+            </thead>
+            <tbody id="leaderboard-tbody" class="divide-y divide-slate-100"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Log Audit Pemilih -->
+      <div class="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-xs">
+        <div class="p-4 border-b border-slate-100 flex items-center justify-between">
+          <h3 class="font-bold text-slate-800 text-sm">📜 Log Audit Suara Pemilih</h3>
+          <span class="text-xs text-slate-400">Pencatatan NIK & Kode Struk</span>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-slate-50 text-slate-600 uppercase text-[11px] font-bold border-b border-slate-200">
+              <tr>
+                <th class="py-3 px-4 w-12 text-center">No</th>
+                <th class="py-3 px-4">Kode Struk</th>
+                <th class="py-3 px-4">NIK Karyawan</th>
+                <th class="py-3 px-4">Pilihan</th>
+                <th class="py-3 px-4">Waktu Voting</th>
+              </tr>
+            </thead>
+            <tbody id="audit-tbody" class="divide-y divide-slate-100"></tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
