@@ -4,15 +4,16 @@
  * Mendukung Blind Voting (Hanya Foto), Validasi NIK Unik, & Panel Admin
  * ==========================================================================
  */
-const SUPABASE_URL = 'https://adosnalhgmkbrmnwefsz.supabase.co/rest/v1/';
+const SUPABASE_URL = 'https://adosnalhgmkbrmnwefsz.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFkb3NuYWxoZ21rYnJtbndlZnN6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcxNzYyOTAsImV4cCI6MjEwMjc1MjI5MH0.wzbD-BYZJgZl-FczYDgmFa7MT6NCNKz7mmrbeV6bwqQ';
-// Gunakan nama supabaseClient agar tidak bentrok dengan library CDN
-const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// Inisialisasi Supabase Client
+const supabaseClient = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
+
 // PIN Keamanan Panel Admin
 const ADMIN_PIN = 'jindi8884';
 
 // Database Master NIK Karyawan (Daftar Karyawan yang Berhak Voting)
-// Anda dapat menempelkan (paste) daftar NIK karyawan perusahaan Anda di sini
 const MASTER_EMPLOYEES = [
   { nik: "17040001", name: "Ma Chuanbo", department: "Director" },
   { nik: "17040002", name: "Juliana", department: "Operations Manager" },
@@ -81,7 +82,7 @@ const MASTER_EMPLOYEES = [
   { nik: "26040150", name: "Luthfie Aghnia Paramitha", department: "Marketing" }
 ];
 
-// 32 Koleksi Foto Peserta Lomba (Format Story 9:16)
+// Koleksi Foto Peserta Lomba (Format Story 9:16)
 const PHOTOS = [
   { id: 1, imageUrl: "https://raw.githubusercontent.com/jindimaterialindonesia/Voting17an/refs/heads/main/Foto_1%20(1).jpeg" },
   { id: 2, imageUrl: "https://raw.githubusercontent.com/jindimaterialindonesia/Voting17an/refs/heads/main/Foto_1%20(2).jpeg" },
@@ -123,17 +124,29 @@ const PHOTOS = [
   { id: 38, imageUrl: "https://raw.githubusercontent.com/jindimaterialindonesia/Voting17an/refs/heads/main/Foto_1%20(38).png" },
 ];
 
-// Helper Storage
 const STORAGE_KEY = 'foto_lomba_votes_data';
 
-function getStoredVotes() {
+// Fetch Data Suara (Async)
+async function getStoredVotes() {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    const { data, error } = await supabaseClient.from('votes').select('*');
-    return raw ? JSON.parse(raw) : [];
+    if (supabaseClient) {
+      const { data, error } = await supabaseClient.from('votes').select('*');
+      if (!error && data) {
+        return data.map(v => ({
+          id: v.id,
+          nik: v.nik,
+          photoId: Number(v.photo_id || v.photoId || v.photo),
+          receiptCode: v.receipt_code || v.receiptCode,
+          votedAt: v.voted_at || v.votedAt || v.created_at
+        }));
+      }
+    }
   } catch (e) {
-    return [];
+    console.warn("Gagal mengambil data dari Supabase, beralih ke LocalStorage:", e);
   }
+
+  const raw = localStorage.getItem(STORAGE_KEY);
+  return raw ? JSON.parse(raw) : [];
 }
 
 function saveStoredVotes(votes) {
@@ -144,7 +157,6 @@ function saveStoredVotes(votes) {
   }
 }
 
-// Generate Struk Unik
 function generateReceiptCode() {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
   let rand = '';
@@ -168,7 +180,6 @@ function initVoterPage() {
     countBadgeEl.textContent = `${PHOTOS.length} Foto`;
   }
 
-  // Render Galeri 9:16 (Hanya Foto & Nomor Foto)
   galleryEl.innerHTML = PHOTOS.map(photo => `
     <div 
       id="card-${photo.id}" 
@@ -183,7 +194,6 @@ function initVoterPage() {
           class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
         />
 
-        <!-- Top Badges -->
         <div class="absolute top-2.5 left-2.5 right-2.5 flex items-center justify-between pointer-events-none">
           <span class="bg-slate-900/80 backdrop-blur-xs text-[11px] font-bold text-white px-2.5 py-0.5 rounded-md shadow-xs pointer-events-auto">
             Foto #${String(photo.id).padStart(2, '0')}
@@ -205,7 +215,6 @@ function initVoterPage() {
         </div>
       </div>
 
-      <!-- Action Button (Hanya Tombol Pilih) -->
       <div class="p-2.5 bg-white border-t border-slate-100">
         <button 
           type="button" 
@@ -219,7 +228,6 @@ function initVoterPage() {
     </div>
   `).join('');
 
-  // Setup Form Submit
   const form = document.getElementById('vote-form');
   if (form) {
     form.addEventListener('submit', handleVoteSubmit);
@@ -229,7 +237,6 @@ function initVoterPage() {
 function selectPhoto(photoId) {
   currentSelectedPhotoId = photoId;
 
-  // Update UI Card state
   PHOTOS.forEach(p => {
     const card = document.getElementById(`card-${p.id}`);
     const checkBadge = document.getElementById(`badge-check-${p.id}`);
@@ -259,7 +266,6 @@ function selectPhoto(photoId) {
     }
   });
 
-  // Update Summary Preview di Form
   const previewEl = document.getElementById('selected-photo-preview');
   if (previewEl) {
     const photo = PHOTOS.find(p => p.id === photoId);
@@ -281,13 +287,6 @@ async function handleVoteSubmit(e) {
   const nikInput = document.getElementById('nik-input');
   const errorEl = document.getElementById('error-msg');
   const nik = nikInput ? nikInput.value.trim() : '';
-  const { data: existing } = await supabaseClient
-  .from('votes')
-  .select('nik')
-  .eq('nik', nik)
-  .maybeSingle();
-
-const { error } = await supabaseClient.from('votes').insert([ ... ]);
 
   if (errorEl) errorEl.classList.add('hidden');
 
@@ -296,7 +295,7 @@ const { error } = await supabaseClient.from('votes').insert([ ... ]);
     return;
   }
 
-  // 1. Cek Validitas NIK di Database Master Karyawan
+  // 1. Cek Validitas NIK di Master Karyawan
   if (MASTER_EMPLOYEES && MASTER_EMPLOYEES.length > 0) {
     const isRegistered = MASTER_EMPLOYEES.some(emp => emp.nik.toLowerCase() === nik.toLowerCase());
     if (!isRegistered) {
@@ -306,7 +305,7 @@ const { error } = await supabaseClient.from('votes').insert([ ... ]);
   }
 
   // 2. Cek apakah NIK sudah pernah voting
-  const votes = getStoredVotes();
+  const votes = await getStoredVotes();
   const existing = votes.find(v => v.nik.toLowerCase() === nik.toLowerCase());
   if (existing) {
     showError(`NIK ${nik} sudah pernah digunakan untuk voting. Setiap karyawan hanya memiliki 1 hak suara.`);
@@ -318,7 +317,6 @@ const { error } = await supabaseClient.from('votes').insert([ ... ]);
     return;
   }
 
-  // Buka Modal Konfirmasi
   openConfirmModal(nik, currentSelectedPhotoId);
 }
 
@@ -350,14 +348,14 @@ function closeConfirmModal() {
   if (modal) modal.classList.add('hidden');
 }
 
-function executeVote() {
+async function executeVote() {
   const nikInput = document.getElementById('nik-input');
   const nik = nikInput ? nikInput.value.trim() : '';
   const photoId = currentSelectedPhotoId;
 
   if (!nik || !photoId) return;
 
-  const votes = getStoredVotes();
+  const votes = await getStoredVotes();
   const existing = votes.find(v => v.nik.toLowerCase() === nik.toLowerCase());
 
   if (existing) {
@@ -366,7 +364,6 @@ function executeVote() {
     return;
   }
 
-  // Simpan Suara Baru
   const receiptCode = generateReceiptCode();
   const newVote = {
     id: Date.now(),
@@ -376,16 +373,30 @@ function executeVote() {
     votedAt: new Date().toISOString()
   };
 
+  // Simpan ke Supabase jika terhubung
+  if (supabaseClient) {
+    try {
+      await supabaseClient.from('votes').insert([
+        {
+          nik: nik,
+          photo_id: photoId,
+          receipt_code: receiptCode
+        }
+      ]);
+    } catch (err) {
+      console.error("Gagal simpan ke Supabase:", err);
+    }
+  }
+
+  // Simpan ke LocalStorage sebagai cadangan
   votes.push(newVote);
   saveStoredVotes(votes);
 
   closeConfirmModal();
 
-  // Reset form
   if (nikInput) nikInput.value = '';
   currentSelectedPhotoId = null;
 
-  // Buka Struk Sukses
   openReceiptModal(newVote);
 }
 
@@ -408,7 +419,6 @@ function openReceiptModal(vote) {
 
   if (modal) modal.classList.remove('hidden');
 
-  // Trigger Confetti
   if (typeof confetti === 'function') {
     confetti({
       particleCount: 80,
@@ -448,16 +458,19 @@ function closeLightbox() {
 function initAdminPage() {
   const loginForm = document.getElementById('admin-login-form');
   if (!loginForm) return;
-  supabaseClient
-  .channel('realtime-votes-channel')
-  .on(
-    'postgres_changes',
-    { event: '*', schema: 'public', table: 'votes' },
-    () => {
-      renderAdminDashboard();
-    }
-  )
-  .subscribe();
+
+  if (supabaseClient) {
+    supabaseClient
+      .channel('realtime-votes-channel')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'votes' },
+        () => {
+          renderAdminDashboard();
+        }
+      )
+      .subscribe();
+  }
 
   loginForm.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -468,7 +481,7 @@ function initAdminPage() {
     if (pin === ADMIN_PIN || pin === 'admin') {
       document.getElementById('admin-login-screen').classList.add('hidden');
       document.getElementById('admin-dashboard').classList.remove('hidden');
-      renderAdminDashboard();
+      await renderAdminDashboard();
     } else {
       if (authError) {
         authError.textContent = "PIN salah. Silakan coba lagi.";
@@ -478,10 +491,9 @@ function initAdminPage() {
   });
 }
 
-function renderAdminDashboard() {
-  const votes = getStoredVotes();
+async function renderAdminDashboard() {
+  const votes = await getStoredVotes();
 
-  // 1. KPI
   const kpiTotal = document.getElementById('kpi-total-votes');
   const kpiLast = document.getElementById('kpi-last-vote');
 
@@ -495,7 +507,6 @@ function renderAdminDashboard() {
     }
   }
 
-  // 2. Hitung Suara per Foto
   const scoreMap = {};
   PHOTOS.forEach(p => scoreMap[p.id] = 0);
   votes.forEach(v => {
@@ -508,7 +519,6 @@ function renderAdminDashboard() {
     percentage: votes.length > 0 ? ((scoreMap[p.id] / votes.length) * 100).toFixed(1) : 0
   })).sort((a, b) => b.votes - a.votes);
 
-  // 3. Render Leaderboard Table
   const tbody = document.getElementById('leaderboard-tbody');
   if (tbody) {
     tbody.innerHTML = ranked.map((item, idx) => {
@@ -538,7 +548,6 @@ function renderAdminDashboard() {
     }).join('');
   }
 
-  // 4. Render Audit Log Table
   const auditTbody = document.getElementById('audit-tbody');
   if (auditTbody) {
     if (votes.length === 0) {
@@ -557,8 +566,8 @@ function renderAdminDashboard() {
   }
 }
 
-function exportVotesToCSV() {
-  const votes = getStoredVotes();
+async function exportVotesToCSV() {
+  const votes = await getStoredVotes();
   if (votes.length === 0) {
     alert("Belum ada data suara untuk di-export.");
     return;
@@ -584,17 +593,23 @@ function exportVotesToCSV() {
   document.body.removeChild(link);
 }
 
-function resetAllVotes() {
+async function resetAllVotes() {
   const confirmText = prompt("Ketik 'RESET' untuk mengonfirmasi penghapusan seluruh data suara:");
-  const { error } = await supabaseClient.from('votes').delete().neq('id', 0);
   if (confirmText === "RESET") {
+    if (supabaseClient) {
+      try {
+        await supabaseClient.from('votes').delete().neq('id', 0);
+      } catch (e) {
+        console.error("Gagal reset Supabase:", e);
+      }
+    }
     localStorage.removeItem(STORAGE_KEY);
-    renderAdminDashboard();
+    await renderAdminDashboard();
     alert("Seluruh data voting berhasil direset!");
   }
 }
 
-// Auto Init based on current page
+// Inisialisasi Otomatis
 document.addEventListener('DOMContentLoaded', () => {
   initVoterPage();
   initAdminPage();
