@@ -6,14 +6,8 @@
  */
 const SUPABASE_URL = 'https://adosnalhgmkbrmnwefsz.supabase.co/rest/v1/';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFkb3NuYWxoZ21rYnJtbndlZnN6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcxNzYyOTAsImV4cCI6MjEwMjc1MjI5MH0.wzbD-BYZJgZl-FczYDgmFa7MT6NCNKz7mmrbeV6bwqQ';
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-// Inisialisasi Aman
-let supabase = null;
-if (window.supabase) {
-  supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-} else {
-  console.error("SDK Supabase gagal dimuat. Periksa koneksi internet atau script tag HTML.");
-}
+// Gunakan nama supabaseClient agar tidak bentrok dengan library CDN
+const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 // PIN Keamanan Panel Admin
 const ADMIN_PIN = 'jindi8884';
 
@@ -135,6 +129,7 @@ const STORAGE_KEY = 'foto_lomba_votes_data';
 function getStoredVotes() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
+    const { data, error } = await supabaseClient.from('votes').select('*');
     return raw ? JSON.parse(raw) : [];
   } catch (e) {
     return [];
@@ -286,6 +281,13 @@ function handleVoteSubmit(e) {
   const nikInput = document.getElementById('nik-input');
   const errorEl = document.getElementById('error-msg');
   const nik = nikInput ? nikInput.value.trim() : '';
+  const { data: existing } = await supabaseClient
+  .from('votes')
+  .select('nik')
+  .eq('nik', nik)
+  .maybeSingle();
+
+const { error } = await supabaseClient.from('votes').insert([ ... ]);
 
   if (errorEl) errorEl.classList.add('hidden');
 
@@ -446,6 +448,16 @@ function closeLightbox() {
 function initAdminPage() {
   const loginForm = document.getElementById('admin-login-form');
   if (!loginForm) return;
+  supabaseClient
+  .channel('realtime-votes-channel')
+  .on(
+    'postgres_changes',
+    { event: '*', schema: 'public', table: 'votes' },
+    () => {
+      renderAdminDashboard();
+    }
+  )
+  .subscribe();
 
   loginForm.addEventListener('submit', (e) => {
     e.preventDefault();
@@ -574,6 +586,7 @@ function exportVotesToCSV() {
 
 function resetAllVotes() {
   const confirmText = prompt("Ketik 'RESET' untuk mengonfirmasi penghapusan seluruh data suara:");
+  const { error } = await supabaseClient.from('votes').delete().neq('id', 0);
   if (confirmText === "RESET") {
     localStorage.removeItem(STORAGE_KEY);
     renderAdminDashboard();
