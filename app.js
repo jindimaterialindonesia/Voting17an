@@ -12,6 +12,7 @@ const supabaseClient = window.supabase ? window.supabase.createClient(SUPABASE_U
 
 // PIN Keamanan Panel Admin
 const ADMIN_PIN = 'jindi8884';
+const VOTING_DEADLINE = new Date('2026-08-21T14:30:00+07:00').getTime();
 
 // Database Master NIK Karyawan (Daftar Karyawan yang Berhak Voting)
 const MASTER_EMPLOYEES = [
@@ -156,6 +157,55 @@ function saveStoredVotes(votes) {
     console.error("Gagal menyimpan ke LocalStorage:", e);
   }
 }
+function startCountdownTimer() {
+  const timerEl = document.getElementById('countdown-timer');
+  if (!timerEl) return;
+
+  function updateTimer() {
+    const now = Date.now();
+    const diff = VOTING_DEADLINE - now;
+
+    if (diff <= 0) {
+      timerEl.innerHTML = `
+        <div class="flex items-center gap-2 bg-red-50 text-red-700 p-3 rounded-xl border border-red-200 text-xs font-bold w-full">
+          <span class="w-2.5 h-2.5 rounded-full bg-red-600 animate-ping shrink-0"></span>
+          <span>🔴 Voting Telah Ditutup (21 Ags 2026, 14:30 WIB)</span>
+        </div>
+      `;
+      disableVotingControls();
+      return true;
+    }
+
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+    let textTime = '';
+    if (days > 0) textTime += `${days} Hari `;
+    textTime += `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+
+    timerEl.innerHTML = `
+      <div class="flex items-center justify-between bg-amber-50/90 text-amber-900 border border-amber-200/80 p-3 rounded-xl text-xs font-medium w-full">
+        <span class="flex items-center gap-1.5 text-amber-800 font-semibold">
+          ⏳ Batas Waktu Voting:
+        </span>
+        <span class="font-mono font-bold text-amber-800 bg-amber-100/90 px-2.5 py-1 rounded-md text-xs tracking-wider border border-amber-200/50">
+          ${textTime}
+        </span>
+      </div>
+    `;
+    return false;
+  }
+
+  if (!updateTimer()) {
+    const timerInterval = setInterval(() => {
+      if (updateTimer()) {
+        clearInterval(timerInterval);
+      }
+    }, 1000);
+  }
+}
 
 function generateReceiptCode() {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -172,6 +222,11 @@ function generateReceiptCode() {
 let currentSelectedPhotoId = null;
 
 function initVoterPage() {
+  startCountdownTimer(); // <--- Panggil fungsi di sini saat halaman dimuat
+
+  if (isVotingClosed()) {
+    disableVotingControls();
+  }
   const galleryEl = document.getElementById('photo-gallery') || document.getElementById('photos-grid');
   const countBadgeEl = document.getElementById('photo-count-badge');
   if (!galleryEl) return;
