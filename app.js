@@ -276,7 +276,7 @@ function selectPhoto(photoId) {
   }
 }
 
-function handleVoteSubmit(e) {
+async function handleVoteSubmit(e) {
   e.preventDefault();
   const nikInput = document.getElementById('nik-input');
   const errorEl = document.getElementById('error-msg');
@@ -459,7 +459,7 @@ function initAdminPage() {
   )
   .subscribe();
 
-  loginForm.addEventListener('submit', (e) => {
+  loginForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const pinInput = document.getElementById('admin-pin-input');
     const authError = document.getElementById('admin-auth-error');
