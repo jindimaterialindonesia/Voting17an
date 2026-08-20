@@ -7,6 +7,9 @@
 const SUPABASE_URL = 'https://adosnalhgmkbrmnwefsz.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFkb3NuYWxoZ21rYnJtbndlZnN6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcxNzYyOTAsImV4cCI6MjEwMjc1MjI5MH0.wzbD-BYZJgZl-FczYDgmFa7MT6NCNKz7mmrbeV6bwqQ';
 
+// Batas waktu voting (21 Agustus 2026, 14:30 WIB)
+const VOTING_DEADLINE = new Date('2026-08-21T14:30:00+07:00').getTime();
+
 // Inisialisasi Supabase Client
 const supabaseClient = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
 
@@ -127,6 +130,78 @@ const PHOTOS = [
 
 const STORAGE_KEY = 'foto_lomba_votes_data';
 
+// Helper Cek Status Voting
+function isVotingClosed() {
+  return Date.now() >= VOTING_DEADLINE;
+}
+
+function disableVotingControls() {
+  const btnSubmit = document.getElementById('btn-submit-vote');
+  const nikInput = document.getElementById('nik-input');
+
+  if (btnSubmit) {
+    btnSubmit.disabled = true;
+    btnSubmit.className = "w-full py-3 px-4 rounded-lg font-bold text-sm bg-slate-300 text-slate-500 cursor-not-allowed shadow-none flex items-center justify-center gap-2";
+    btnSubmit.innerHTML = '<span>🔒 Voting Telah Ditutup</span>';
+  }
+
+  if (nikInput) {
+    nikInput.disabled = true;
+    nikInput.classList.add('bg-slate-100', 'cursor-not-allowed');
+    nikInput.placeholder = "Batas waktu voting telah habis";
+  }
+}
+
+function startCountdownTimer() {
+  const timerEl = document.getElementById('countdown-timer');
+  if (!timerEl) return;
+
+  function updateTimer() {
+    const now = Date.now();
+    const diff = VOTING_DEADLINE - now;
+
+    if (diff <= 0) {
+      timerEl.innerHTML = `
+        <div class="flex items-center gap-2 bg-red-50 text-red-700 p-3 rounded-xl border border-red-200 text-xs font-bold w-full">
+          <span class="w-2.5 h-2.5 rounded-full bg-red-600 animate-ping shrink-0"></span>
+          <span>🔴 Voting Telah Ditutup (21 Ags 2026, 14:30 WIB)</span>
+        </div>
+      `;
+      disableVotingControls();
+      return true;
+    }
+
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+    let textTime = '';
+    if (days > 0) textTime += `${days} Hari `;
+    textTime += `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+
+    timerEl.innerHTML = `
+      <div class="flex items-center justify-between bg-amber-50/90 text-amber-900 border border-amber-200/80 p-3 rounded-xl text-xs font-medium w-full">
+        <span class="flex items-center gap-1.5 text-amber-800 font-semibold">
+          ⏳ Batas Waktu:
+        </span>
+        <span class="font-mono font-bold text-amber-800 bg-amber-100/90 px-2.5 py-1 rounded-md text-xs tracking-wider border border-amber-200/50">
+          ${textTime}
+        </span>
+      </div>
+    `;
+    return false;
+  }
+
+  if (!updateTimer()) {
+    const timerInterval = setInterval(() => {
+      if (updateTimer()) {
+        clearInterval(timerInterval);
+      }
+    }, 1000);
+  }
+}
+
 // Fetch Data Suara (Async)
 async function getStoredVotes() {
   try {
@@ -176,6 +251,12 @@ function initVoterPage() {
   const galleryEl = document.getElementById('photo-gallery') || document.getElementById('photos-grid');
   const countBadgeEl = document.getElementById('photo-count-badge');
   if (!galleryEl) return;
+
+  // Jalankan Countdown Timer & Cek Status Tutup
+  startCountdownTimer();
+  if (isVotingClosed()) {
+    disableVotingControls();
+  }
 
   if (countBadgeEl) {
     countBadgeEl.textContent = `${PHOTOS.length} Foto`;
@@ -236,6 +317,8 @@ function initVoterPage() {
 }
 
 function selectPhoto(photoId) {
+  if (isVotingClosed()) return;
+
   currentSelectedPhotoId = photoId;
 
   PHOTOS.forEach(p => {
@@ -285,6 +368,12 @@ function selectPhoto(photoId) {
 
 async function handleVoteSubmit(e) {
   e.preventDefault();
+  
+  if (isVotingClosed()) {
+    showError("Voting telah ditutup, Anda tidak dapat lagi mengirimkan suara.");
+    return;
+  }
+
   const nikInput = document.getElementById('nik-input');
   const errorEl = document.getElementById('error-msg');
   const nik = nikInput ? nikInput.value.trim() : '';
@@ -296,20 +385,20 @@ async function handleVoteSubmit(e) {
     return;
   }
 
-  // 1. Cek Validitas NIK di Master Karyawan
+  // Cek Validitas NIK
   if (MASTER_EMPLOYEES && MASTER_EMPLOYEES.length > 0) {
     const isRegistered = MASTER_EMPLOYEES.some(emp => emp.nik.toLowerCase() === nik.toLowerCase());
     if (!isRegistered) {
-      showError(`NIK "${nik}" tidak terdaftar dalam database karyawan. Silakan periksa kembali atau hubungi Panitia.`);
+      showError(`NIK "${nik}" tidak terdaftar dalam database karyawan. Silakan periksa kembali.`);
       return;
     }
   }
 
-  // 2. Cek apakah NIK sudah pernah voting
+  // Cek apakah NIK sudah pernah voting
   const votes = await getStoredVotes();
   const existing = votes.find(v => v.nik.toLowerCase() === nik.toLowerCase());
   if (existing) {
-    showError(`NIK ${nik} sudah pernah digunakan untuk voting. Setiap karyawan hanya memiliki 1 hak suara.`);
+    showError(`NIK ${nik} sudah pernah digunakan untuk voting.`);
     return;
   }
 
@@ -350,6 +439,12 @@ function closeConfirmModal() {
 }
 
 async function executeVote() {
+  if (isVotingClosed()) {
+    closeConfirmModal();
+    showError("Voting telah ditutup.");
+    return;
+  }
+
   const nikInput = document.getElementById('nik-input');
   const nik = nikInput ? nikInput.value.trim() : '';
   const photoId = currentSelectedPhotoId;
@@ -374,7 +469,6 @@ async function executeVote() {
     votedAt: new Date().toISOString()
   };
 
-  // Simpan ke Supabase jika terhubung
   if (supabaseClient) {
     try {
       await supabaseClient.from('votes').insert([
@@ -389,7 +483,6 @@ async function executeVote() {
     }
   }
 
-  // Simpan ke LocalStorage sebagai cadangan
   votes.push(newVote);
   saveStoredVotes(votes);
 
@@ -421,11 +514,7 @@ function openReceiptModal(vote) {
   if (modal) modal.classList.remove('hidden');
 
   if (typeof confetti === 'function') {
-    confetti({
-      particleCount: 80,
-      spread: 60,
-      origin: { y: 0.6 }
-    });
+    confetti({ particleCount: 80, spread: 60, origin: { y: 0.6 } });
   }
 }
 
@@ -466,9 +555,7 @@ function initAdminPage() {
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'votes' },
-        () => {
-          renderAdminDashboard();
-        }
+        () => { renderAdminDashboard(); }
       )
       .subscribe();
   }
