@@ -4,7 +4,9 @@
  * Mendukung Blind Voting (Hanya Foto), Validasi NIK Unik, & Panel Admin
  * ==========================================================================
  */
-
+const SUPABASE_URL = 'https://adosnalhgmkbrmnwefsz.supabase.co/rest/v1/';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFkb3NuYWxoZ21rYnJtbndlZnN6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcxNzYyOTAsImV4cCI6MjEwMjc1MjI5MH0.wzbD-BYZJgZl-FczYDgmFa7MT6NCNKz7mmrbeV6bwqQ';
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 // PIN Keamanan Panel Admin
 const ADMIN_PIN = 'jindi8884';
 
